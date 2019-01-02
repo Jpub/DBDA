@@ -1,5 +1,5 @@
 # R, JAGS, Stan을 이용한 베이지안 데이터 분석 바이블(제2판)
-![R, JAGS, Stan을 이용한 베이지안 데이터 분석 바이블(제2판)]()
+![R, JAGS, Stan을 이용한 베이지안 데이터 분석 바이블(제2판)](http://image.kyobobook.co.kr/images/book/xlarge/316/x9791188621316.jpg)
 
 
 **출판사** 제이펍  
@@ -12,4 +12,4 @@
 **ISBN**  979-11-88621-31-6 (93000)  
 
 
-[### 도서 소개 페이지 바로 가기 ###](http://jpub.tistory.com/)
+[### 도서 소개 페이지 바로 가기 ###](http://jpub.tistory.com/884?category=208491)
