@@ -12,9 +12,9 @@ likelihood = function( theta , data ) {
   z = sum( data )
   N = length( data )
   pDataGivenTheta = theta^z * (1-theta)^(N-z)
-  # The theta values passed into this function are generated at random,
-  # and therefore might be inadvertently greater than 1 or less than 0.
-  # The likelihood for theta > 1 or for theta < 0 is zero:
+  # 이 함수에 전달된 theta 값들은 무작위로 생성된다.
+  # 그래서, 우연히 1 보다 크거나 0 보다 작을 수 있다.
+  # theta > 1 또는 theta < 0 에 대한 우도는 0이다:
   pDataGivenTheta[ theta > 1 | theta < 0 ] = 0
   return( pDataGivenTheta )
 }
