@@ -28,7 +28,7 @@ model {
   for ( i in 1:Ntotal ) {
     y[i] ~ dbern( theta ) # 가능도 또는 우도
   }
-  theta ~ dbeta( 1 , 1 ) # 사전분포포
+  theta ~ dbeta( 1 , 1 ) # 사전분포 
 }
 " # 모델물자열에 대한 이중따옴표를 닫는다.
 writeLines( modelString , con="TEMPmodel.txt" ) # 파일로 쓰기
