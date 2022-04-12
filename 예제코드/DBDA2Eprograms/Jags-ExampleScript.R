@@ -39,18 +39,18 @@ writeLines( modelString , con="TEMPmodel.txt" ) # 파일로 쓰기
 #  initsList = list( theta=thetaInit )
 # Option: 각 체인에 대해서 무작위값을 생성하는 함수를 사용한다:
 initsList = function() {
-  resampledY = sample( y , replace=TRUE )
-  thetaInit = sum(resampledY)/length(resampledY)
-  thetaInit = 0.001+0.998*thetaInit # 0,1 에서 멀리 유지함 
-  return( list( theta=thetaInit ) )
+  resampledY = sample( y , replace=TRUE )        # y 에서 값을 다시 표본 추출함
+  thetaInit = sum(resampledY)/length(resampledY) # 비율(MLE) 계산
+  thetaInit = 0.001+0.998*thetaInit              # 0,1 에서 멀리 유지함 
+  return( list( theta=thetaInit ) )              # 이름이 있는 list로 리턴시킴킴
 }
 
 # 체인을 실행한다:
 jagsModel = jags.model( file="TEMPmodel.txt" , data=dataList , inits=initsList , 
-                        n.chains=3 , n.adapt=500 )
-update( jagsModel , n.iter=500 )
+                        n.chains=3 , n.adapt=500 ) # 모형 생성
+update( jagsModel , n.iter=500 ) # XXX: 번인이 되도록 일부 단계의 연쇄를 실행
 codaSamples = coda.samples( jagsModel , variable.names=c("theta") ,
-                            n.iter=3334 )
+                            n.iter=3334 ) # XXX: MCMC 표본 생성
 save( codaSamples , file=paste0(fileNameRoot,"Mcmc.Rdata") )
 
 # 체인을 검토한다:
