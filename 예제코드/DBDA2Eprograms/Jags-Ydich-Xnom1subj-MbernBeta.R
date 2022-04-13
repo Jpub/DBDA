@@ -8,22 +8,22 @@ source("DBDA2E-utilities.R")
 genMCMC = function( data , numSavedSteps=50000 , saveName=NULL ) { 
   require(rjags)
   #-----------------------------------------------------------------------------
-  # THE DATA.
-  if ( class(data)=="data.frame" ) {  # If data is a data.frame
-    y = myData$y                      # then pull out the column named y
-  } else {                            # else
-    y = data                          # rename the data as y.
+  # 데이터
+  if ( class(data)=="data.frame" ) {  # 만약 데이터가 data.frame 이라면
+    y = myData$y                      # 컬럼 이름 y 를 뽑아내고 
+  } else {                            # 그렇지 않으면
+    y = data                          # 데이터를 y 로 이름을 변경한다.
   }
-  # Do some checking that data make sense:
+  # 데이터가 의미가 있는지 몇 가지 체크를 한다:
   if ( any( y!=0 & y!=1 ) ) { stop("All y values must be 0 or 1.") }
   Ntotal = length(y)
-  # Specify the data in a list, for later shipment to JAGS:
+  # list 내에 데이터를 명시한다, 나중에 JAGS 에 사용하기 위해서임:
   dataList = list(
     y = y ,
     Ntotal = Ntotal 
   )
   #-----------------------------------------------------------------------------
-  # THE MODEL.
+  # 모델: 
   modelString = "
   model {
     for ( i in 1:Ntotal ) {
@@ -31,15 +31,15 @@ genMCMC = function( data , numSavedSteps=50000 , saveName=NULL ) {
     }
     theta ~ dbeta( 1 , 1 )
   }
-  " # close quote for modelString
+  " # modelString 에 대해서 " 로 닫는다.
   writeLines( modelString , con="TEMPmodel.txt" )
   #-----------------------------------------------------------------------------
-  # INTIALIZE THE CHAINS.
-  # Initial values of MCMC chains based on data:
-  # Option 1: Use single initial value for all chains:
+  # 체인을 초기화한다.
+  # 데이터에 기반해서 MCMC 체인의 초기값들:
+  # Option 1: 모든 체인에 대해서 단일한 초기값을 사용한다:
   #  thetaInit = sum(y)/length(y)
   #  initsList = list( theta=thetaInit )
-  # Option 2: Use function that generates random values for each chain:
+  # Option 2: 각 체인에 대해서 무작위 값을 생성하는 함수를 사용한다:
   initsList = function() {
     resampledY = sample( y , replace=TRUE )
     thetaInit = sum(resampledY)/length(resampledY)
@@ -47,24 +47,24 @@ genMCMC = function( data , numSavedSteps=50000 , saveName=NULL ) {
     return( list( theta=thetaInit ) )
   }
   #-----------------------------------------------------------------------------
-  # RUN THE CHAINS
-  parameters = c( "theta")     # The parameters to be monitored
-  adaptSteps = 500             # Number of steps to adapt the samplers
-  burnInSteps = 500            # Number of steps to burn-in the chains
-  nChains = 4                  # nChains should be 2 or more for diagnostics 
+  # 체인을 실행한다.
+  parameters = c( "theta")     # 모니터링되어야할 모수
+  adaptSteps = 500             # 샘플러를 조정하는 단계 수
+  burnInSteps = 500            # 체인을 번인하는 단계 수
+  nChains = 4                  # 진단을 위해서는 nChains는 2 또는 그 이상이어야 한다.
   thinSteps = 1
   nIter = ceiling( ( numSavedSteps * thinSteps ) / nChains )
-  # Create, initialize, and adapt the model:
+  # 모델을 생성, 초기화 그리고 조정을 한다.
   jagsModel = jags.model( "TEMPmodel.txt" , data=dataList , inits=initsList , 
                           n.chains=nChains , n.adapt=adaptSteps )
-  # Burn-in:
+  # 번인:
   cat( "Burning in the MCMC chain...\n" )
   update( jagsModel , n.iter=burnInSteps )
-  # The saved MCMC chain:
+  # 저장된 MCMC 체인:
   cat( "Sampling final MCMC chain...\n" )
   codaSamples = coda.samples( jagsModel , variable.names=parameters , 
                               n.iter=nIter , thin=thinSteps )
-  # resulting codaSamples object has these indices: 
+  # codaSamples 가 이들 인덱스를 갖도록 하게 한다.
   #   codaSamples[[ chainIdx ]][ stepIdx , paramIdx ]
   if ( !is.null(saveName) ) {
     save( codaSamples , file=paste(saveName,"Mcmc.Rdata",sep="") )
@@ -91,14 +91,14 @@ smryMCMC = function(  codaSamples , compVal=NULL , rope=NULL , saveName=NULL ) {
 
 plotMCMC = function( codaSamples , data , compVal=NULL , rope=NULL , 
                      saveName=NULL , showCurve=FALSE , saveType="jpg" ) {
-  # showCurve is TRUE or FALSE and indicates whether the posterior should
-  #   be displayed as a histogram (by default) or by an approximate curve.
+  # showCurve 는 TRUE 또는 FALSE 가 되는데, 사후분포가 히스토그램(기본임)으로
+  # 보여져야 할지 또는 근사 곡선 (approximate curve) 로 보여져야 할지를 나타낸다.
   #-----------------------------------------------------------------------------
   mcmcMat = as.matrix(codaSamples,chains=TRUE)
   chainLength = NROW( mcmcMat )
   theta = mcmcMat[,"theta"]
   #-----------------------------------------------------------------------------
-  # Set up window and layout:
+  # 윈도우와 레이아웃을 설정한다:
   openGraph(width=4.0,height=3.0)
   par( mar=c(3.5,0.5,2.5,0.5) , mgp=c(2.25,0.7,0) )
   #-----------------------------------------------------------------------------
