@@ -54,7 +54,7 @@ genMCMC = function( data , numSavedSteps=50000 , saveName=NULL ) {
   nChains = 4                  # 진단을 위해서는 nChains는 2 또는 그 이상이어야 한다.
   thinSteps = 1
   nIter = ceiling( ( numSavedSteps * thinSteps ) / nChains )
-  # 모델을 생성, 초기화 그리고 조정을 한다.
+  # 모델을 생성, 초기화 그리고 조정을 한다:
   jagsModel = jags.model( "TEMPmodel.txt" , data=dataList , inits=initsList , 
                           n.chains=nChains , n.adapt=adaptSteps )
   # 번인:

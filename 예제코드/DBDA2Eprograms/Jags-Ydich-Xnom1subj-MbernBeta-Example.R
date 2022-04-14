@@ -8,7 +8,7 @@ rm(list=ls())  # Careful! This clears all of R's memory!
 myData = read.csv("z15N50.csv")
 #------------------------------------------------------------------------------- 
 # genMCMC, smryMCMC, and plotMCMC 함수를 로딩:
-source("Jags-Ydich-Xnom1subj-MbernBeta.R")
+source("Jags-Ydich-Xnom1subj-MbernBeta.R") # XXX: 8.3 Example
 #------------------------------------------------------------------------------- 
 # Optional: 출력 저장을 위해서 파일이름 root와 그래픽 포맷을 명시.
 # 그렇지 않으면, NULL 로 명시하거나 함수 호출에서 saveName과 saveType 인자를 제외한다.

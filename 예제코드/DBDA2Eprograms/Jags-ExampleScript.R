@@ -13,7 +13,7 @@ require(rjags)               # 반드시 이전에 설치된 패키지 rjags 가
 
 fileNameRoot="Jags-ExampleScript" # 출력 파일 이름을 위해서.
 
-# Load the data:
+# 데이터를 로딩한다:
 myData = read.csv("z15N50.csv") # 데이터 파일 읽기; 현재의 디렉토리에 있어야 한다.
 y = myData$y        # y값들은 컬럼 이름 y에 있다.
 Ntotal = length(y)  # 동전 던지기의 전체 개수를 계산한다.
