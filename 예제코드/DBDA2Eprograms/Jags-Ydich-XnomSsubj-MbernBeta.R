@@ -132,7 +132,8 @@ plotMCMC = function( codaSamples , data , compVal=0.5 , rope=NULL ,
   # y 이름의 성분은 정수 0,1 값들의 벡터여야 하고,
   # s 이름의 성분은 주제 식별에 대한 팩터여야 한다. 
   y = data$y
-  s = as.numeric(data$s) # converts character to consecutive integer levels
+  #s = as.numeric(data$s) # converts character to consecutive integer levels
+  s = as.numeric(as.factor(data$s)) # 문자를 연속적인 정수 레벨로 변환한다. 
   # Now plot the posterior:
   mcmcMat = as.matrix(codaSamples,chains=TRUE)
   chainLength = NROW( mcmcMat )
@@ -155,7 +156,7 @@ plotMCMC = function( codaSamples , data , compVal=0.5 , rope=NULL ,
         postInfo = plotPost( mcmcMat[,parName1] , cex.lab = 1.75 , 
                              compVal=compVal , ROPE=rope , cex.main=1.5 ,
                              xlab=parName1 , main="" )
-        includeRows = ( s == t1Idx ) # identify rows of this subject in data
+        includeRows = ( s == t1Idx ) # 데이터 내에서 이 주제에 대한 행을 식별한다.
         dataPropor = sum(y[includeRows])/sum(includeRows) 
         points( dataPropor , 0 , pch="+" , col="red" , cex=3 )
       } else if ( t1Idx < t2Idx ) {
@@ -163,9 +164,9 @@ plotMCMC = function( codaSamples , data , compVal=0.5 , rope=NULL ,
         postInfo = plotPost(mcmcMat[,parName1]-mcmcMat[,parName2] , cex.lab = 1.75 , 
                            compVal=compValDiff , ROPE=ropeDiff , cex.main=1.5 ,
                            xlab=paste0(parName1,"-",parName2) , main="" )
-        includeRows1 = ( s == t1Idx ) # identify rows of this subject in data
+        includeRows1 = ( s == t1Idx ) # 데이터 내에서 이 주제에 대한 행을 식별한다.
         dataPropor1 = sum(y[includeRows1])/sum(includeRows1) 
-        includeRows2 = ( s == t2Idx ) # identify rows of this subject in data
+        includeRows2 = ( s == t2Idx ) # 데이터 내에서 이 주제에 대한 행을 식별한다.
         dataPropor2 = sum(y[includeRows2])/sum(includeRows2) 
         points( dataPropor1-dataPropor2 , 0 , pch="+" , col="red" , cex=3 )
       }
