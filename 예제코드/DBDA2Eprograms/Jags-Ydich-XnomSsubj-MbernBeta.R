@@ -9,16 +9,18 @@ genMCMC = function( data , numSavedSteps=50000 , saveName=NULL ) {
   require(rjags)
   #-----------------------------------------------------------------------------
   # THE DATA.
-  # N.B.: This function expects the data to be a data frame, 
-  # with one component named y being a vector of integer 0,1 values,
-  # and one component named s being a factor of subject identifiers.
+  # 주의: 이 함수는 데이터가 데이터 프레임이 되기를 기대한다.
+  # y 이름의 성분은 정수 0,1 값들의 벡터여야 하고,
+  # s 이름의 성분은 주제 식별에 대한 팩터여야 한다. 
   y = data$y
-  s = as.numeric(data$s) # converts character to consecutive integer levels
-  # Do some checking that data make sense:
+  # XXX: R4.1.2 에서 as.numeric(data$s) 는 오류가 발생한다.
+  #s = as.numeric(data$s) # converts character to consecutive integer levels
+  s = as.numeric(as.factor(data$s)) # 문자를 연속적인 정수 레벨로 변환한다. 
+  # 데이터가 의미있는지 몇 가지 ㅊ크를 한다:
   if ( any( y!=0 & y!=1 ) ) { stop("All y values must be 0 or 1.") }
   Ntotal = length(y)
   Nsubj = length(unique(s))
-  # Specify the data in a list, for later shipment to JAGS:
+  # list 내에 데이터를 명시해서, 나중에 JAGS 에 전달한다(shipment):
   dataList = list(
     y = y ,
     s = s ,
@@ -40,52 +42,52 @@ genMCMC = function( data , numSavedSteps=50000 , saveName=NULL ) {
   writeLines( modelString , con="TEMPmodel.txt" )
   #-----------------------------------------------------------------------------
   # INTIALIZE THE CHAINS.
-  # Initial values of MCMC chains based on data:
-  # Option 1: Use single initial value for all chains:
+  # 데이터에 기반한 MCMC 체인의 초기 값들:
+  # Option 1: 모든 체인에 대해서 단일한 초기 값을 사용한다:
   #  thetaInit = rep(0,Nsubj)
-  #  for ( sIdx in 1:Nsubj ) { # for each subject
-  #    includeRows = ( s == sIdx ) # identify rows of this subject
-  #    yThisSubj = y[includeRows]  # extract data of this subject
-  #    thetaInit[sIdx] = sum(yThisSubj)/length(yThisSubj) # proportion
+  #  for ( sIdx in 1:Nsubj ) { # 각각의 주제에 대해서
+  #    includeRows = ( s == sIdx ) # 이 주제의 행을 식별하고
+  #    yThisSubj = y[includeRows]  # 이 주제의 데이터를 추출한다.
+  #    thetaInit[sIdx] = sum(yThisSubj)/length(yThisSubj) # 비율
   #  }
   #  initsList = list( theta=thetaInit )
-  # Option 2: Use function that generates random values near MLE:
+  # Option 2: MLE 가까이 있는 무작위 값을 생성하는 함수를 사용한다:
   initsList = function() {
     thetaInit = rep(0,Nsubj)
-    for ( sIdx in 1:Nsubj ) { # for each subject
-      includeRows = ( s == sIdx ) # identify rows of this subject
-      yThisSubj = y[includeRows]  # extract data of this subject
-      resampledY = sample( yThisSubj , replace=TRUE ) # resample
+    for ( sIdx in 1:Nsubj ) { # 각각의 주제에 대해서 
+      includeRows = ( s == sIdx ) # 이 주제의 행을 식별하고 
+      yThisSubj = y[includeRows]  # 이 주제의 데이터를 추출한다. 
+      resampledY = sample( yThisSubj , replace=TRUE ) # 재샘플링
       thetaInit[sIdx] = sum(resampledY)/length(resampledY) 
     }
-    thetaInit = 0.001+0.998*thetaInit # keep away from 0,1
+    thetaInit = 0.001+0.998*thetaInit # 0, 1에서 멀리 유지한다.
     return( list( theta=thetaInit ) )
   }
   #-----------------------------------------------------------------------------
   # RUN THE CHAINS
-  parameters = c( "theta")     # The parameters to be monitored
-  adaptSteps = 500             # Number of steps to adapt the samplers
-  burnInSteps = 500            # Number of steps to burn-in the chains
-  nChains = 4                  # nChains should be 2 or more for diagnostics 
+  parameters = c( "theta")     # 모니터링되어야할 모수
+  adaptSteps = 500             # 샘플러를 조정하는 단계 수
+  burnInSteps = 500            # 체인을 번인하는 단계 수
+  nChains = 4                  # 진단을 위해서는 nChains는 2 또는 그 이상이어야 한다.
   thinSteps = 1
   nIter = ceiling( ( numSavedSteps * thinSteps ) / nChains )
-  # Create, initialize, and adapt the model:
+  # 모델을 생성, 초기화 그리고 조정을 한다:
   jagsModel = jags.model( "TEMPmodel.txt" , data=dataList , inits=initsList , 
                           n.chains=nChains , n.adapt=adaptSteps )
-  # Burn-in:
+  # 번인:
   cat( "Burning in the MCMC chain...\n" )
   update( jagsModel , n.iter=burnInSteps )
-  # The saved MCMC chain:
+  # 저장된 MCMC 체인:
   cat( "Sampling final MCMC chain...\n" )
   codaSamples = coda.samples( jagsModel , variable.names=parameters , 
                               n.iter=nIter , thin=thinSteps )
-  # resulting codaSamples object has these indices: 
+  # codaSamples 가 이들 인덱스를 갖도록 하게 한다.
   #   codaSamples[[ chainIdx ]][ stepIdx , paramIdx ]
   if ( !is.null(saveName) ) {
     save( codaSamples , file=paste(saveName,"Mcmc.Rdata",sep="") )
   }
   return( codaSamples )
-} # end function
+} # 함수 끝
 
 #===============================================================================
 
@@ -126,11 +128,12 @@ plotMCMC = function( codaSamples , data , compVal=0.5 , rope=NULL ,
                      compValDiff=0.0 , ropeDiff=NULL , 
                      saveName=NULL , saveType="jpg" ) {
   #-----------------------------------------------------------------------------
-  # N.B.: This function expects the data to be a data frame, 
-  # with one component named y being a vector of integer 0,1 values,
-  # and one component named s being a factor of subject identifiers.
+  # 주의: 이 함수는 데이터가 데이터 프레임이 되기를 기대한다. 
+  # y 이름의 성분은 정수 0,1 값들의 벡터여야 하고,
+  # s 이름의 성분은 주제 식별에 대한 팩터여야 한다. 
   y = data$y
-  s = as.numeric(data$s) # converts character to consecutive integer levels
+  #s = as.numeric(data$s) # converts character to consecutive integer levels
+  s = as.numeric(as.factor(data$s)) # 문자를 연속적인 정수 레벨로 변환한다. 
   # Now plot the posterior:
   mcmcMat = as.matrix(codaSamples,chains=TRUE)
   chainLength = NROW( mcmcMat )
@@ -153,7 +156,7 @@ plotMCMC = function( codaSamples , data , compVal=0.5 , rope=NULL ,
         postInfo = plotPost( mcmcMat[,parName1] , cex.lab = 1.75 , 
                              compVal=compVal , ROPE=rope , cex.main=1.5 ,
                              xlab=parName1 , main="" )
-        includeRows = ( s == t1Idx ) # identify rows of this subject in data
+        includeRows = ( s == t1Idx ) # 데이터 내에서 이 주제에 대한 행을 식별한다.
         dataPropor = sum(y[includeRows])/sum(includeRows) 
         points( dataPropor , 0 , pch="+" , col="red" , cex=3 )
       } else if ( t1Idx < t2Idx ) {
@@ -161,9 +164,9 @@ plotMCMC = function( codaSamples , data , compVal=0.5 , rope=NULL ,
         postInfo = plotPost(mcmcMat[,parName1]-mcmcMat[,parName2] , cex.lab = 1.75 , 
                            compVal=compValDiff , ROPE=ropeDiff , cex.main=1.5 ,
                            xlab=paste0(parName1,"-",parName2) , main="" )
-        includeRows1 = ( s == t1Idx ) # identify rows of this subject in data
+        includeRows1 = ( s == t1Idx ) # 데이터 내에서 이 주제에 대한 행을 식별한다.
         dataPropor1 = sum(y[includeRows1])/sum(includeRows1) 
-        includeRows2 = ( s == t2Idx ) # identify rows of this subject in data
+        includeRows2 = ( s == t2Idx ) # 데이터 내에서 이 주제에 대한 행을 식별한다.
         dataPropor2 = sum(y[includeRows2])/sum(includeRows2) 
         points( dataPropor1-dataPropor2 , 0 , pch="+" , col="red" , cex=3 )
       }
